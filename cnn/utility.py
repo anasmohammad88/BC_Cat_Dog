@@ -5,7 +5,10 @@ from torchvision import transforms
 from pathlib import Path
 import matplotlib.pyplot as plt
 
+from cnn.model import CatDogClassification
+
 CLASS_TO_IDX = {"cats": 0, "dogs": 1}
+IDX_TO_CLASS = {value: key for key, value in CLASS_TO_IDX.items()}
 
 class ImageDataset(Dataset):
     def __init__(self, dataset_path, transform=None):
@@ -63,6 +66,34 @@ def show_sample(dataset):
             break
 
 
+
+def plot_prediction(model,img_path,transform,device="cpu"):
+    model.eval()
+    image = Image.open(img_path).convert("RGB")
+    image_tensor = transform(image).unsqueeze(0).to(device)
+
+    with torch.no_grad():
+        output = model(image_tensor)
+        prob_dog = torch.sigmoid(output).item()
+        prob_cat = 1 - prob_dog
+
+        if prob_dog >= 0.5:
+            predicted_class = "dogs"
+            confidence = prob_dog
+        else:
+            predicted_class = "cats"
+            confidence = prob_cat
+
+    plt.figure(figsize=(6, 6))
+
+    plt.imshow(image)
+
+    plt.title(f"Prediction: {predicted_class}\n"f"Confidence: {confidence * 100:.2f}%")
+
+    plt.axis("off")
+    plt.show()
+
+
 def save_model(model, name="model"):
     path = Path("checkpoints") / f"{name}.pt"
     path.parent.mkdir(exist_ok=True)
@@ -81,6 +112,15 @@ def load_model(model, name="model", device="cpu"):
     
     
 if __name__ == "__main__":
-    dataset_path="data/DogsVsCats/train"
-    dataset = ImageDataset(dataset_path)
-    show_sample(dataset)
+    # dataset_path="data/DogsVsCats/train"
+    transform = transforms.Compose([transforms.Resize((224, 224)),transforms.ToTensor()])
+    # dataset = ImageDataset(dataset_path=dataset_path,transform=transform)
+    # show_sample(dataset)
+    
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = CatDogClassification()
+    model = load_model(model, name="BC_cat_dog", device=device)
+    model.to(device)
+    
+    # plot_prediction(model=model,img_path="data/DogsVsCats/test/dogs/dog.191.jpg",transform=transform,device=device)
+    plot_prediction(model=model,img_path="data/DogsVsCats/test/cats/cat.108.jpg",transform=transform,device=device)
