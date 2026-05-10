@@ -24,12 +24,12 @@ def train(args):
         transforms.ToTensor()
     ])
         
-    train_data = load_data("data/DogsVsCats/train", transform=train_transform, batch_size=128)
-    eval_data = load_data("data/DogsVsCats/test", transform=eval_transform, batch_size=128)
+    train_data = load_data("data/DogsVsCats/train", transform=train_transform, batch_size=256)
+    eval_data = load_data("data/DogsVsCats/test", transform=eval_transform, batch_size=256)
     
     criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.AdamW(params=model.parameters(), lr=1e-3)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=10)
+    optimizer = optim.AdamW(params=model.parameters(), lr=1e-3, weight_decay=1e-3)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=7)
     
     train_accuracy = met.Accuracy(task='binary').to(device)
     eval_accuracy = met.Accuracy(task='binary').to(device)
